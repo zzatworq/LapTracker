@@ -42,24 +42,24 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = getSharedPreferences(TrackingService.PREFS, Context.MODE_PRIVATE)
-        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(16), dp(16), dp(16)); setBackgroundColor(Color.WHITE) }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(16), dp(16), dp(16)); setBackgroundColor(Color.BLACK) }
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        val title = TextView(this).apply { text = "Lap Tracker"; textSize = 22f; setTypeface(null, Typeface.BOLD); setTextColor(Color.BLACK) }
+        val title = TextView(this).apply { text = "Lap Tracker"; textSize = 22f; setTypeface(null, Typeface.BOLD); setTextColor(Color.WHITE) }
         header.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         header.addView(Button(this).apply { text = "History"; setOnClickListener { startActivity(Intent(this@MainActivity, HistoryActivity::class.java)) } })
         root.addView(header)
-        statusView = TextView(this).apply { textSize = 14f; setTextColor(Color.DKGRAY) }; root.addView(statusView)
-        distanceView = TextView(this).apply { textSize = 56f; setTypeface(null, Typeface.BOLD); setTextColor(Color.BLACK); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(8)) }; root.addView(distanceView)
+        statusView = TextView(this).apply { textSize = 14f; setTextColor(Color.LTGRAY) }; root.addView(statusView)
+        distanceView = TextView(this).apply { textSize = 56f; setTypeface(null, Typeface.BOLD); setTextColor(Color.WHITE); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(8)) }; root.addView(distanceView)
         val stats = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         elapsedView = addStat(stats, "Time"); speedView = addStat(stats, "Speed"); avgView = addStat(stats, "Average"); root.addView(stats)
-        currentLapView = TextView(this).apply { textSize = 14f; setTextColor(Color.DKGRAY); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(8)) }; root.addView(currentLapView)
+        currentLapView = TextView(this).apply { textSize = 14f; setTextColor(Color.LTGRAY); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(8)) }; root.addView(currentLapView)
         val buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         startBtn = Button(this).apply { textSize = 18f; setOnClickListener { onStartStopClicked() } }
         lapBtn = Button(this).apply { text = "Lap"; textSize = 18f; setOnClickListener { startService(Intent(this@MainActivity, TrackingService::class.java).setAction(TrackingService.ACTION_LAP)) } }
         buttons.addView(startBtn, LinearLayout.LayoutParams(0, dp(64), 1f)); buttons.addView(lapBtn, LinearLayout.LayoutParams(0, dp(64), 1f)); root.addView(buttons)
         root.addView(callSwitch("Mark a lap when a call starts", prefs, TrackingService.PREF_LAP_ON_CALL_START))
         root.addView(callSwitch("Mark a lap when a call ends", prefs, TrackingService.PREF_LAP_ON_CALL_END))
-        root.addView(TextView(this).apply { text = "Laps"; textSize = 16f; setTypeface(null, Typeface.BOLD); setTextColor(Color.BLACK); setPadding(0, dp(12), 0, dp(4)) })
+        root.addView(TextView(this).apply { text = "Laps"; textSize = 16f; setTypeface(null, Typeface.BOLD); setTextColor(Color.WHITE); setPadding(0, dp(12), 0, dp(4)) })
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, ArrayList())
         root.addView(ListView(this).apply { adapter = this@MainActivity.adapter }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
@@ -67,11 +67,11 @@ class MainActivity : Activity() {
 
     private fun addStat(row: LinearLayout, label: String): TextView {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-        val value = TextView(this).apply { textSize = 20f; setTypeface(null, Typeface.BOLD); setTextColor(Color.BLACK); gravity = Gravity.CENTER }
-        val caption = TextView(this).apply { text = label; textSize = 12f; setTextColor(Color.GRAY); gravity = Gravity.CENTER }
+        val value = TextView(this).apply { textSize = 20f; setTypeface(null, Typeface.BOLD); setTextColor(Color.WHITE); gravity = Gravity.CENTER }
+        val caption = TextView(this).apply { text = label; textSize = 12f; setTextColor(Color.LTGRAY); gravity = Gravity.CENTER }
         box.addView(value); box.addView(caption); row.addView(box, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)); return value
     }
-    private fun callSwitch(label: String, prefs: android.content.SharedPreferences, key: String): Switch = Switch(this).apply { text = label; isChecked = prefs.getBoolean(key, true); setPadding(0, dp(8), 0, dp(8)); setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean(key, checked).apply() } }
+    private fun callSwitch(label: String, prefs: android.content.SharedPreferences, key: String): Switch = Switch(this).apply { text = label; setTextColor(Color.WHITE); isChecked = prefs.getBoolean(key, true); setPadding(0, dp(8), 0, dp(8)); setOnCheckedChangeListener { _, checked -> prefs.edit().putBoolean(key, checked).apply() } }
     override fun onStart() { super.onStart(); TrackerBus.addListener(listener); ui.post(tick) }
     override fun onStop() { super.onStop(); TrackerBus.removeListener(listener); ui.removeCallbacks(tick) }
 
@@ -93,6 +93,7 @@ class MainActivity : Activity() {
         if (!granted(Manifest.permission.ACCESS_FINE_LOCATION)) { needed.add(Manifest.permission.ACCESS_FINE_LOCATION); needed.add(Manifest.permission.ACCESS_COARSE_LOCATION) }
         if (Build.VERSION.SDK_INT >= 33 && !granted(Manifest.permission.POST_NOTIFICATIONS)) needed.add(Manifest.permission.POST_NOTIFICATIONS)
         if (!granted(Manifest.permission.READ_PHONE_STATE)) needed.add(Manifest.permission.READ_PHONE_STATE)
+        if (Build.VERSION.SDK_INT < 31 && !granted(Manifest.permission.READ_CALL_LOG)) needed.add(Manifest.permission.READ_CALL_LOG)
         if (needed.isEmpty()) beginTracking() else requestPermissions(needed.toTypedArray(), 1)
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) { super.onRequestPermissionsResult(requestCode, permissions, grantResults); if (granted(Manifest.permission.ACCESS_FINE_LOCATION)) beginTracking() else Toast.makeText(this, "Precise location permission is required to record your route", Toast.LENGTH_LONG).show() }
